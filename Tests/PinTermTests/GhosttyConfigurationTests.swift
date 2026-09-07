@@ -3,6 +3,25 @@ import Testing
 @testable import PinTerm
 
 struct GhosttyConfigurationTests {
+    @Test func skipTmuxCommandsAndPersistSetting() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let root = directory.appendingPathComponent("config")
+        let original = "font-size = 19\ncommand = /bin/zsh\nconfig-file = child"
+        try original.write(to: root, atomically: true, encoding: .utf8)
+        try "command = /opt/homebrew/bin/tmux new-session -A\ninitial-command = /bin/sh -c 'exec tmux'".write(to: directory.appendingPathComponent("child"), atomically: true, encoding: .utf8)
+        let loader = GhosttyConfiguration()
+        #expect(try loader.load(independentFile: root.path).contains("exec tmux"))
+        let filtered = try loader.load(independentFile: root.path, skipTmux: true)
+        #expect(filtered == "font-size = 19\ncommand = /bin/zsh\ncommand =\ninitial-command =")
+        #expect(try String(contentsOf: root, encoding: .utf8) == original)
+        var settings = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+        #expect(!settings.skipTmux)
+        settings.skipTmux = true
+        #expect(try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings)) == settings)
+    }
+
     @Test func inheritanceOrderAndIndependentFile() throws {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: home) }

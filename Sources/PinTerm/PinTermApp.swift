@@ -97,7 +97,7 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
 
     private func create(_ module: Module) throws {
         let path = module.configFile ?? (settings.independentConfig.isEmpty ? nil : settings.independentConfig)
-        let configuration = try GhosttyConfiguration().load(independentFile: path)
+        let configuration = try GhosttyConfiguration().load(independentFile: path, skipTmux: settings.skipTmux)
         let controller = try ModuleWindow(module: module, configuration: configuration)
         windows.append(controller)
         controller.onChange = { [weak self] in self?.save() }
@@ -206,7 +206,8 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
                   FileManager.default.fileExists(atPath: result.settings.defaultDirectory, isDirectory: &isDirectory), isDirectory.boolValue else {
                 throw ConfigurationError("默认目录不存在。")
             }
-            let config = try GhosttyConfiguration().load(independentFile: result.settings.independentConfig.isEmpty ? nil : result.settings.independentConfig)
+            let config = try GhosttyConfiguration().load(independentFile: result.settings.independentConfig.isEmpty ? nil : result.settings.independentConfig,
+                skipTmux: result.settings.skipTmux)
             let validator = TerminalController(configSource: .generated(config), theme: .init())
             if let issue = validator.lastConfigurationIssue { throw ConfigurationError(issue) }
             try result.settings.save()

@@ -18,7 +18,7 @@ struct GhosttyConfiguration {
             .flatMap { directory in ["config", "config.ghostty"].map { directory.appendingPathComponent($0) } }
     }
 
-    func load(independentFile: String?) throws -> String {
+    func load(independentFile: String?, skipTmux: Bool = false) throws -> String {
         let roots = independentFile.map { [URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath)] }
             ?? defaultFiles.filter { FileManager.default.fileExists(atPath: $0.path) }
         var output: [String] = []
@@ -38,7 +38,10 @@ struct GhosttyConfiguration {
                 let rawValue = parts[1].trimmingCharacters(in: .whitespaces)
                 let value = rawValue.hasPrefix("\"") && rawValue.hasSuffix("\"") && rawValue.count >= 2
                     ? String(rawValue.dropFirst().dropLast()) : rawValue
-                if key == "config-file" {
+                if skipTmux, ["command", "initial-command"].contains(key),
+                   value.range(of: #"(?<![A-Za-z0-9_.-])tmux(?![A-Za-z0-9_.-])"#, options: .regularExpression) != nil {
+                    output.append("\(key) =")
+                } else if key == "config-file" {
                     if value.isEmpty {
                         queue.removeSubrange(max(index, roots.count)..<queue.count)
                         continue

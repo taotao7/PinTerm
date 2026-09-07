@@ -6,6 +6,22 @@ struct AppSettings: Codable, Equatable {
     /// Empty means inherit the user's Ghostty config files.
     var independentConfig = ""
     var restoreWindows = true
+    var skipTmux = false
+
+    init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case defaultCommand, defaultDirectory, independentConfig, restoreWindows, skipTmux
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        defaultCommand = try values.decodeIfPresent(String.self, forKey: .defaultCommand) ?? ""
+        defaultDirectory = try values.decodeIfPresent(String.self, forKey: .defaultDirectory) ?? NSHomeDirectory()
+        independentConfig = try values.decodeIfPresent(String.self, forKey: .independentConfig) ?? ""
+        restoreWindows = try values.decodeIfPresent(Bool.self, forKey: .restoreWindows) ?? true
+        skipTmux = try values.decodeIfPresent(Bool.self, forKey: .skipTmux) ?? false
+    }
 
     static var url: URL { ModuleStore.standard.url.deletingLastPathComponent().appendingPathComponent("settings.json") }
 

@@ -18,7 +18,7 @@ open -a PinTerm
 也可从 [GitHub Releases](https://github.com/taotao7/PinTerm/releases) 下载 ZIP，
 将 `PinTerm.app` 放入 Applications。应用只显示在菜单栏，不显示 Dock 图标。
 
-**v0.1.0 为 ad-hoc 签名，尚未经过 Apple 公证。** 若系统阻止首次打开，
+**v0.2.1 为 ad-hoc 签名，尚未经过 Apple 公证。** 若系统阻止首次打开，
 确认下载来源后按 macOS「系统设置 → 隐私与安全性 → 仍要打开」流程操作。
 安装脚本不会关闭 Gatekeeper，也不会自动移除隔离标记。
 
@@ -67,6 +67,10 @@ open dist/PinTerm.app
   目录，再找 `/Applications/Ghostty.app` 或 `~/Applications/Ghostty.app` 的主题资源。
   也支持绝对主题路径和 light/dark 双主题。不会修改原 Ghostty 配置。
 - 全局独立配置路径非空时，**只读取该配置**；模块自身的 `configFile` 优先于全局。
+- 可勾选 **不载入 Ghostty 配置中的 tmux 启动命令**：将含 `tmux` 的
+  `command` / `initial-command` 重置为引擎默认值，保留外观配置，也处理被引用的配置文件。
+  默认关闭，修改对新建及下次恢复的窗口生效。显式模块命令优先，不受此开关影响；
+  `.zshrc` 等 shell 脚本自动启动的 tmux 不在此开关控制范围内。
 - 字体、颜色、光标、透明度等交由 Ghostty 解析，不再强加封装默认主题。
   新模块不覆盖字号/透明度；旧模块保留原覆盖值，可用菜单
   **当前窗口：恢复配置字号与透明度** 清除。

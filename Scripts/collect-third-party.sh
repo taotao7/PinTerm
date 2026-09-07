@@ -4,7 +4,8 @@ ROOT="$(dirname "$(dirname "$(realpath "$0")")")"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 LICENSES="$ROOT/Resources/Licenses"
-STAGE="$WORK/PinTerm-0.1.0-ThirdPartySources"
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$ROOT/Resources/Info.plist")
+STAGE="$WORK/PinTerm-$VERSION-ThirdPartySources"
 mkdir -p "$LICENSES" "$STAGE/sources" "$ROOT/dist"
 : > "$LICENSES/SOURCES.tsv"
 fetch() {
@@ -90,6 +91,6 @@ cp "$ROOT/docs/REBUILDING.md" "$STAGE/REBUILDING.md"
 cp "$ROOT/THIRD_PARTY_NOTICES.md" "$STAGE/THIRD_PARTY_NOTICES.md"
 cp -R "$LICENSES" "$STAGE/Licenses"
 (cd "$STAGE" && shasum -a 256 sources/* > SHA256SUMS)
-COPYFILE_DISABLE=1 tar -czf "$ROOT/dist/PinTerm-0.1.0-ThirdPartySources.tar.gz" -C "$WORK" PinTerm-0.1.0-ThirdPartySources
-tar -tzf "$ROOT/dist/PinTerm-0.1.0-ThirdPartySources.tar.gz"
-shasum -a 256 "$ROOT/dist/PinTerm-0.1.0-ThirdPartySources.tar.gz"
+COPYFILE_DISABLE=1 tar -czf "$ROOT/dist/PinTerm-$VERSION-ThirdPartySources.tar.gz" -C "$WORK" "PinTerm-$VERSION-ThirdPartySources"
+tar -tzf "$ROOT/dist/PinTerm-$VERSION-ThirdPartySources.tar.gz"
+shasum -a 256 "$ROOT/dist/PinTerm-$VERSION-ThirdPartySources.tar.gz"

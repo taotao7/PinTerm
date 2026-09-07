@@ -9,6 +9,7 @@ final class SettingsDialog {
     private let config: NSTextField
     private let restore: NSButton
     private let launch: NSButton
+    let skipTmux: NSButton
 
     init(_ settings: AppSettings) {
         alert.messageText = "PinTerm 设置"
@@ -20,6 +21,10 @@ final class SettingsDialog {
         config.placeholderString = "留空继承本机 Ghostty；或填写独立配置绝对路径"
         restore = NSButton(checkboxWithTitle: "启动时恢复上次模块（否则运行默认模块）", target: nil, action: nil)
         restore.state = settings.restoreWindows ? .on : .off
+        skipTmux = NSButton(checkboxWithTitle: "不载入 Ghostty 配置中的 tmux 启动命令", target: nil, action: nil)
+        skipTmux.state = settings.skipTmux ? .on : .off
+        let tmuxNote = NSTextField(wrappingLabelWithString: "忽略含 tmux 的 command / initial-command；保留外观配置。显式模块命令及 .zshrc 等 shell 脚本不受影响。")
+        tmuxNote.textColor = .secondaryLabelColor
         launch = NSButton(checkboxWithTitle: "登录 macOS 时自动启动 PinTerm", target: nil, action: nil)
         let status = SMAppService.mainApp.status
         launch.state = (status == .enabled || status == .requiresApproval) ? .on : .off
@@ -31,13 +36,13 @@ final class SettingsDialog {
             NSTextField(labelWithString: "默认运行命令"), command,
             NSTextField(labelWithString: "默认工作目录"), directory,
             NSTextField(labelWithString: "独立 Ghostty 配置（可选）"), config,
-            restore, launch, statusText,
+            skipTmux, tmuxNote, restore, launch, statusText,
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
-        stack.frame = NSRect(x: 0, y: 0, width: 460, height: 290)
-        for field in [command, directory, config, statusText] {
+        stack.frame = NSRect(x: 0, y: 0, width: 460, height: 370)
+        for field in [command, directory, config, statusText, tmuxNote] {
             field.widthAnchor.constraint(equalToConstant: 460).isActive = true
         }
         alert.accessoryView = stack
@@ -52,6 +57,7 @@ final class SettingsDialog {
         result.defaultDirectory = (directory.stringValue as NSString).expandingTildeInPath
         result.independentConfig = (config.stringValue as NSString).expandingTildeInPath
         result.restoreWindows = restore.state == .on
+        result.skipTmux = skipTmux.state == .on
         return (result, launch.state == .on)
     }
 }

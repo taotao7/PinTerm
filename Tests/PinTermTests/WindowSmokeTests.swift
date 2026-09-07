@@ -48,6 +48,10 @@ struct WindowSmokeTests {
 
         let settings = SettingsDialog(AppSettings())
         settings.alert.layout()
+        #expect(settings.skipTmux.state == .off)
+        settings.skipTmux.performClick(nil)
+        #expect(settings.skipTmux.state == .on)
+        #expect(settings.skipTmux.isEnabled && !settings.skipTmux.isHidden)
         #expect(settings.alert.buttons.map(\.title) == ["保存", "取消"])
         #expect(settings.alert.buttons.allSatisfy { !$0.isHidden && $0.isEnabled })
         settings.alert.window.makeKeyAndOrderFront(nil)

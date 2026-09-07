@@ -1,0 +1,2 @@
+# Preserve upstream license bytes so the bundled checksum manifest stays valid.
+Resources/Licenses/** -text

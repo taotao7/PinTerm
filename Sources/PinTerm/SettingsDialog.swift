@@ -1,0 +1,57 @@
+import AppKit
+import ServiceManagement
+
+@MainActor
+final class SettingsDialog {
+    let alert = NSAlert()
+    private let command: NSTextField
+    private let directory: NSTextField
+    private let config: NSTextField
+    private let restore: NSButton
+    private let launch: NSButton
+
+    init(_ settings: AppSettings) {
+        alert.messageText = "PinTerm 设置"
+        alert.informativeText = "配置与启动命令对新建模块生效，不会重启当前任务。命令留空继承 Ghostty 的 command；未设置时启动 shell。"
+        command = NSTextField(string: settings.defaultCommand)
+        command.placeholderString = "例如 btop、ssh user@host、/bin/zsh"
+        directory = NSTextField(string: settings.defaultDirectory)
+        config = NSTextField(string: settings.independentConfig)
+        config.placeholderString = "留空继承本机 Ghostty；或填写独立配置绝对路径"
+        restore = NSButton(checkboxWithTitle: "启动时恢复上次模块（否则运行默认模块）", target: nil, action: nil)
+        restore.state = settings.restoreWindows ? .on : .off
+        launch = NSButton(checkboxWithTitle: "登录 macOS 时自动启动 PinTerm", target: nil, action: nil)
+        let status = SMAppService.mainApp.status
+        launch.state = (status == .enabled || status == .requiresApproval) ? .on : .off
+        let statusText = NSTextField(wrappingLabelWithString: status == .requiresApproval
+            ? "登录项等待系统批准；保存后打开系统设置。"
+            : "登录项由 macOS 管理；请从固定位置运行打包的 .app。")
+        statusText.textColor = .secondaryLabelColor
+        let stack = NSStackView(views: [
+            NSTextField(labelWithString: "默认运行命令"), command,
+            NSTextField(labelWithString: "默认工作目录"), directory,
+            NSTextField(labelWithString: "独立 Ghostty 配置（可选）"), config,
+            restore, launch, statusText,
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.frame = NSRect(x: 0, y: 0, width: 460, height: 290)
+        for field in [command, directory, config, statusText] {
+            field.widthAnchor.constraint(equalToConstant: 460).isActive = true
+        }
+        alert.accessoryView = stack
+        alert.addButton(withTitle: "保存")
+        alert.addButton(withTitle: "取消")
+    }
+
+    func run() -> (settings: AppSettings, launchAtLogin: Bool)? {
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        var result = AppSettings()
+        result.defaultCommand = command.stringValue
+        result.defaultDirectory = (directory.stringValue as NSString).expandingTildeInPath
+        result.independentConfig = (config.stringValue as NSString).expandingTildeInPath
+        result.restoreWindows = restore.state == .on
+        return (result, launch.state == .on)
+    }
+}

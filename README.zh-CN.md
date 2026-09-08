@@ -8,7 +8,7 @@
 
 <img src="Resources/media/screenshot.png" width="100%" alt="PinTerm 截图">
 
-<video src="./Resources/media/pinterm-demo.mp4" width="100%" autoplay muted loop controls playsinline></video>
+<img src="./Resources/media/pinterm-demo.gif" width="100%" alt="PinTerm 演示">
 
 原生 macOS 菜单栏微型终端。每个模块是独立 `NSWindow`，嵌入
 `GhosttyTerminal` / libghostty 的 Metal surface，使用 `.exec` 后端运行真实 PTY。

@@ -60,6 +60,7 @@ struct GhosttyConfigurationTests {
 
     @Test func defaultsAndOldModules() throws {
         var settings = AppSettings()
+        #expect(Module().alwaysOnTop)
         #expect(settings.newModule().command == nil)
         #expect(settings.newModule().fontSize == nil)
         #expect(settings.newModule().opacity == nil)

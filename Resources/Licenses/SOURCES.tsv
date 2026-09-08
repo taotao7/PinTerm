@@ -4,6 +4,7 @@ MSDisplayLink/LICENSE	https://raw.githubusercontent.com/Lakr233/MSDisplayLink/87
 bash-preexec/LICENSE.md	https://raw.githubusercontent.com/Lakr233/libghostty-spm/733ae3b29d447b6707cbfc00879027a076dfd0eb/Sources/GhosttyTerminal/Resources/Ghostty/shell-integration/bash/LICENSE-bash-preexec.md
 JetBrainsMono/OFL.txt	https://raw.githubusercontent.com/JetBrains/JetBrainsMono/v2.304/OFL.txt
 NerdFontsSymbolsOnly/LICENSE	https://deps.files.ghostty.org/NerdFontsSymbolsOnly-3.4.0.tar.gz
+NerdFontsSymbolsOnly/README.md	https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.4.0/readme.md
 NerdFontsSymbolsOnly/glyphs/README.md	https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.4.0/src/glyphs/README.md
 NerdFontsSymbolsOnly/glyphs/codicons/LICENSE.txt	https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.4.0/src/glyphs/codicons/LICENSE.txt
 NerdFontsSymbolsOnly/glyphs/font-awesome/LICENSE.txt	https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.4.0/src/glyphs/font-awesome/LICENSE.txt
@@ -33,4 +34,3 @@ Zig/LICENSE	https://ziglang.org/download/0.16.0/zig-0.16.0.tar.xz
 gettext/COPYING.LIB	https://deps.files.ghostty.org/gettext-0.24.tar.gz
 stb/stb_image_resize.h.LICENSE.txt	https://raw.githubusercontent.com/ghostty-org/ghostty/c4e16970a803b170e352432424f44192cb59f3ac/src/stb/stb_image_resize.h
 stb/stb_image.h.LICENSE.txt	https://raw.githubusercontent.com/ghostty-org/ghostty/c4e16970a803b170e352432424f44192cb59f3ac/src/stb/stb_image.h
-NerdFontsSymbolsOnly/README.md	https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.4.0/readme.md

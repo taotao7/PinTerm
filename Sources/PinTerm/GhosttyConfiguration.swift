@@ -28,7 +28,7 @@ struct GhosttyConfiguration {
             let (file, ancestors) = queue[index]
             index += 1
             guard !ancestors.contains(file), index <= 256 else {
-                throw ConfigurationError("config-file 循环引用或引用过多：\(file.path)")
+                throw ConfigurationError(L10n.text("config-file 循环引用或引用过多：", "Circular or excessive config-file references: ") + file.path)
             }
             let text = try String(contentsOf: file, encoding: .utf8)
             for line in text.components(separatedBy: .newlines) {

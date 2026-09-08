@@ -8,12 +8,17 @@ struct Module: Codable, Equatable, Identifiable {
     var configFile: String?
     var fontSize: Float?
     var opacity: Double?
-    var alwaysOnTop = false
+    var alwaysOnTop = true
     var frame: String?
+    /// Nil in older files means the widget was open.
+    var isClosed: Bool?
 
-    /// Run compound user commands consistently, regardless of Ghostty's command parser.
+    /// Match a normal terminal's startup files, PATH, aliases, and shell syntax.
     var launchCommand: String? {
-        command.map { "/bin/sh -c '" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+        guard let command else { return nil }
+        let shell = getpwuid(getuid()).flatMap { $0.pointee.pw_shell }.map { String(cString: $0) } ?? "/bin/zsh"
+        return "'" + shell.replacingOccurrences(of: "'", with: "'\\''")
+            + "' -lic '" + command.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
     func validate() throws {

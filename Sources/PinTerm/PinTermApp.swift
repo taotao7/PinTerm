@@ -45,6 +45,7 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         add("显示所有模块", #selector(showAll), to: menu)
         add("当前窗口：切换置顶", #selector(togglePin), to: menu)
+        add("当前窗口：设置宽高…", #selector(setPanelSize), to: menu)
         add("当前窗口：字号 +", #selector(largerFont), to: menu)
         add("当前窗口：字号 −", #selector(smallerFont), to: menu)
         add("当前窗口：切换透明度", #selector(cycleOpacity), to: menu)
@@ -99,6 +100,7 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
         let path = module.configFile ?? (settings.independentConfig.isEmpty ? nil : settings.independentConfig)
         let configuration = try GhosttyConfiguration().load(independentFile: path, skipTmux: settings.skipTmux)
         let controller = try ModuleWindow(module: module, configuration: configuration)
+        (controller.window as? TerminalWindow)?.dragModifiers = NSEvent.ModifierFlags(rawValue: settings.dragModifiers)
         windows.append(controller)
         controller.onChange = { [weak self] in self?.save() }
         controller.onClose = { [weak self, weak controller] in
@@ -178,6 +180,22 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
     }
     @objc private func largerFont() { changeFont(1) }
     @objc private func smallerFont() { changeFont(-1) }
+    @objc private func setPanelSize() {
+        guard let current, let window = current.window, let screen = window.screen ?? NSScreen.main else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        let dialog = PanelSizeDialog(size: window.frame.size, maximum: screen.visibleFrame.size)
+        guard dialog.alert.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            let size = try dialog.selectedSize()
+            var frame = window.frame
+            frame.origin.y += frame.height - size.height
+            frame.size = size
+            window.setFrame(frame, display: true)
+            current.module.frame = NSStringFromRect(window.frame)
+            save()
+        } catch { report(error, message: "无法调整面板大小") }
+    }
+
     private func changeFont(_ delta: Float) {
         guard let current else { return }
         current.module.fontSize = min(48, max(8, current.configuredFontSize + delta))
@@ -201,6 +219,9 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         guard let result = SettingsDialog(settings).run() else { return }
         do {
+            guard result.settings.dragModifiers != 0 else {
+                throw ConfigurationError("拖动快捷键至少需要选择一个修饰键。")
+            }
             var isDirectory: ObjCBool = false
             guard result.settings.defaultDirectory.hasPrefix("/"),
                   FileManager.default.fileExists(atPath: result.settings.defaultDirectory, isDirectory: &isDirectory), isDirectory.boolValue else {
@@ -212,6 +233,9 @@ final class PinTermApp: NSObject, NSApplicationDelegate {
             if let issue = validator.lastConfigurationIssue { throw ConfigurationError(issue) }
             try result.settings.save()
             settings = result.settings
+            for controller in windows {
+                (controller.window as? TerminalWindow)?.dragModifiers = NSEvent.ModifierFlags(rawValue: settings.dragModifiers)
+            }
             let service = SMAppService.mainApp
             if result.launchAtLogin && service.status != .enabled && service.status != .requiresApproval {
                 guard Bundle.main.bundleURL.pathExtension == "app" else {

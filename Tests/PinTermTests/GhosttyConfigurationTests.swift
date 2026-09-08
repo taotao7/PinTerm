@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Testing
 @testable import PinTerm
 
@@ -17,8 +17,10 @@ struct GhosttyConfigurationTests {
         #expect(filtered == "font-size = 19\ncommand = /bin/zsh\ncommand =\ninitial-command =")
         #expect(try String(contentsOf: root, encoding: .utf8) == original)
         var settings = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
-        #expect(!settings.skipTmux)
-        settings.skipTmux = true
+        #expect(settings.skipTmux)
+        #expect(settings.dragModifiers == AppSettings().dragModifiers)
+        settings.skipTmux = false
+        settings.dragModifiers = NSEvent.ModifierFlags.control.rawValue
         #expect(try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings)) == settings)
     }
 

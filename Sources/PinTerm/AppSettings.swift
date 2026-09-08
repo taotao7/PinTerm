@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 struct AppSettings: Codable, Equatable {
     var defaultCommand = ""
@@ -6,12 +6,13 @@ struct AppSettings: Codable, Equatable {
     /// Empty means inherit the user's Ghostty config files.
     var independentConfig = ""
     var restoreWindows = true
-    var skipTmux = false
+    var skipTmux = true
+    var dragModifiers = NSEvent.ModifierFlags([.command, .shift]).rawValue
 
     init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case defaultCommand, defaultDirectory, independentConfig, restoreWindows, skipTmux
+        case defaultCommand, defaultDirectory, independentConfig, restoreWindows, skipTmux, dragModifiers
     }
 
     init(from decoder: Decoder) throws {
@@ -20,7 +21,9 @@ struct AppSettings: Codable, Equatable {
         defaultDirectory = try values.decodeIfPresent(String.self, forKey: .defaultDirectory) ?? NSHomeDirectory()
         independentConfig = try values.decodeIfPresent(String.self, forKey: .independentConfig) ?? ""
         restoreWindows = try values.decodeIfPresent(Bool.self, forKey: .restoreWindows) ?? true
-        skipTmux = try values.decodeIfPresent(Bool.self, forKey: .skipTmux) ?? false
+        skipTmux = try values.decodeIfPresent(Bool.self, forKey: .skipTmux) ?? true
+        dragModifiers = try values.decodeIfPresent(UInt.self, forKey: .dragModifiers)
+            ?? NSEvent.ModifierFlags([.command, .shift]).rawValue
     }
 
     static var url: URL { ModuleStore.standard.url.deletingLastPathComponent().appendingPathComponent("settings.json") }

@@ -10,6 +10,11 @@ final class SettingsDialog {
     private let restore: NSButton
     private let launch: NSButton
     let skipTmux: NSButton
+    let modifierButtons: [(NSEvent.ModifierFlags, NSButton)]
+
+    var selectedDragModifiers: UInt {
+        modifierButtons.reduce(0) { $0 | ($1.1.state == .on ? $1.0.rawValue : 0) }
+    }
 
     init(_ settings: AppSettings) {
         alert.messageText = "PinTerm 设置"
@@ -32,17 +37,28 @@ final class SettingsDialog {
             ? "登录项等待系统批准；保存后打开系统设置。"
             : "登录项由 macOS 管理；请从固定位置运行打包的 .app。")
         statusText.textColor = .secondaryLabelColor
+        let choices: [(NSEvent.ModifierFlags, String)] = [(.command, "⌘ Command"), (.shift, "⇧ Shift"), (.option, "⌥ Option"), (.control, "⌃ Control")]
+        modifierButtons = choices.map { flag, title in
+            let button = NSButton(checkboxWithTitle: title, target: nil, action: nil)
+            button.state = settings.dragModifiers & flag.rawValue != 0 ? .on : .off
+            return (flag, button)
+        }
+        let modifiers = NSStackView(views: modifierButtons.map { $0.1 })
+        modifiers.spacing = 12
+        let dragNote = NSTextField(wrappingLabelWithString: "至少选择一个键；按住所选组合 + 左键拖动。保存后立即生效，不触发原生贴边分屏；单键组合可能覆盖终端手势。")
+        dragNote.textColor = .secondaryLabelColor
         let stack = NSStackView(views: [
             NSTextField(labelWithString: "默认运行命令"), command,
             NSTextField(labelWithString: "默认工作目录"), directory,
             NSTextField(labelWithString: "独立 Ghostty 配置（可选）"), config,
             skipTmux, tmuxNote, restore, launch, statusText,
+            NSTextField(labelWithString: "拖动窗口快捷键"), modifiers, dragNote,
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
-        stack.frame = NSRect(x: 0, y: 0, width: 460, height: 370)
-        for field in [command, directory, config, statusText, tmuxNote] {
+        stack.frame = NSRect(x: 0, y: 0, width: 460, height: 470)
+        for field in [command, directory, config, statusText, tmuxNote, dragNote] {
             field.widthAnchor.constraint(equalToConstant: 460).isActive = true
         }
         alert.accessoryView = stack
@@ -58,6 +74,7 @@ final class SettingsDialog {
         result.independentConfig = (config.stringValue as NSString).expandingTildeInPath
         result.restoreWindows = restore.state == .on
         result.skipTmux = skipTmux.state == .on
+        result.dragModifiers = selectedDragModifiers
         return (result, launch.state == .on)
     }
 }

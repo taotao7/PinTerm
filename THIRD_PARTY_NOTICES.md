@@ -1,7 +1,7 @@
-# PinTerm 0.2.1 — third-party notices
+# PinTerm 0.2.2 — third-party notices
 
 PinTerm's own application source is MIT licensed; see the top-level LICENSE at
-<https://github.com/taotao7/PinTerm/tree/v0.2.1>. Third-party components retain
+<https://github.com/taotao7/PinTerm/tree/v0.2.2>. Third-party components retain
 their own copyrights and terms. The full texts are in `Resources/Licenses/`
 (in the app: `PinTerm.app/Contents/Resources/Licenses/`). `SOURCES.tsv` records
 the authoritative retrieval URLs and `SHA256SUMS` identifies the supplied files.
@@ -54,8 +54,8 @@ fonts must follow the applicable reserved-name and other license conditions.
 
 ## Source availability and relinking
 
-The release at <https://github.com/taotao7/PinTerm/releases/tag/v0.2.1> supplies
-`PinTerm-0.2.1-ThirdPartySources.tar.gz` alongside the binary. It contains the
+The release at <https://github.com/taotao7/PinTerm/releases/tag/v0.2.2> supplies
+`PinTerm-0.2.2-ThirdPartySources.tar.gz` alongside the binary. It contains the
 exact Ghostty and wrapper source archives (including wrapper patches and build
 scripts), GNU gettext 0.24, z2d's MPL-covered source, MSDisplayLink, these notices,
 full license texts, source URLs/checksums, and rebuilding instructions.

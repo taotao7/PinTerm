@@ -1,4 +1,4 @@
-# Rebuilding and relinking PinTerm 0.2.1
+# Rebuilding and relinking PinTerm 0.2.2
 
 This is the source-based replacement route for the statically linked
 Ghostty/gettext libraries. PinTerm's application source is MIT. You may modify,
@@ -8,9 +8,9 @@ so. Third-party source remains subject to its accompanying licenses.
 
 ## Inputs
 
-Download the app source for tag `v0.2.1` and
-`PinTerm-0.2.1-ThirdPartySources.tar.gz` from
-<https://github.com/taotao7/PinTerm/releases/tag/v0.2.1>.
+Download the app source for tag `v0.2.2` and
+`PinTerm-0.2.2-ThirdPartySources.tar.gz` from
+<https://github.com/taotao7/PinTerm/releases/tag/v0.2.2>.
 The latter contains these unmodified upstream archives, plus all wrapper patches:
 
 - Ghostty `c4e16970a803b170e352432424f44192cb59f3ac`
@@ -46,7 +46,7 @@ tar -xzf sources/libghostty-spm-733ae3b29d447b6707cbfc00879027a076dfd0eb.tar.gz 
 tar -xzf sources/gettext-0.24.tar.gz -C "$WORK/gettext" --strip-components=1
 tar -xzf sources/z2d-7dbae85c81784dba9988320bf9543ed9a81350c8.tar.gz -C "$WORK/z2d" --strip-components=1
 tar -xzf sources/MSDisplayLink-2.2.0.tar.gz -C "$WORK/MSDisplayLink" --strip-components=1
-git clone --branch v0.2.1 https://github.com/taotao7/PinTerm.git "$WORK/PinTerm"
+git clone --branch v0.2.2 https://github.com/taotao7/PinTerm.git "$WORK/PinTerm"
 ```
 
 The archives include the wrapper's hidden `.root` marker. Keep it. Initialize
@@ -141,7 +141,7 @@ as part of collecting these materials. Application builds and tests use the
 pinned upstream XCFramework; that does not establish bit-for-bit reproduction
 of the native library. SDK/compiler differences can change output.
 The release maintainer must publish
-the app's complete MIT source at `v0.2.1` (including its build scripts), ship the
+the app's complete MIT source at `v0.2.2` (including its build scripts), ship the
 license directory in the app, and upload the third-party source archive alongside
 the binary with equivalent download access. Keep sources available with the
 binary; a link to upstream alone is not the supplied source artifact.

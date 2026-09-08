@@ -63,7 +63,7 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
         terminal.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(terminal)
         let handle = WindowDragHandle()
-        handle.toolTip = "拖动移动窗口；菜单栏可关闭、设置模块"
+        handle.toolTip = "拖动移动窗口；也可按住设置中的快捷键在终端任意位置拖动（默认 ⌘⇧）"
         handle.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(handle)
         NSLayoutConstraint.activate([
@@ -158,12 +158,44 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
     }
 }
 
-private final class TerminalWindow: NSWindow {
+final class TerminalWindow: NSWindow {
+    private var dragStart: (mouse: NSPoint, origin: NSPoint)?
+    var dragModifiers: NSEvent.ModifierFlags = [.command, .shift]
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+
+    func isWindowDrag(_ event: NSEvent) -> Bool {
+        !dragModifiers.isEmpty && event.type == .leftMouseDown && event.modifierFlags.intersection([.command, .option, .shift, .control]) == dragModifiers
+    }
+
+    func beginWindowDrag(at point: NSPoint) {
+        dragStart = (point, frame.origin)
+    }
+
+    func updateWindowDrag(to point: NSPoint) {
+        guard let start = dragStart else { return }
+        setFrameOrigin(NSPoint(x: start.origin.x + point.x - start.mouse.x,
+            y: start.origin.y + point.y - start.mouse.y))
+    }
+
+    override func sendEvent(_ event: NSEvent) {
+        if isWindowDrag(event) {
+            // Intercept before Ghostty sees mouseDown so no terminal selection or TUI click starts.
+            beginWindowDrag(at: NSEvent.mouseLocation)
+        } else if dragStart != nil && event.type == .leftMouseDragged {
+            // Updating the origin directly avoids the native drag-to-tile session.
+            updateWindowDrag(to: NSEvent.mouseLocation)
+        } else if dragStart != nil && event.type == .leftMouseUp {
+            updateWindowDrag(to: NSEvent.mouseLocation)
+            dragStart = nil
+        } else {
+            super.sendEvent(event)
+        }
+    }
 }
 
 private final class WindowDragHandle: NSView {
-    override func mouseDown(with event: NSEvent) { window?.performDrag(with: event) }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func mouseDown(with event: NSEvent) { (window as? TerminalWindow)?.beginWindowDrag(at: NSEvent.mouseLocation) }
     override func resetCursorRects() { addCursorRect(bounds, cursor: .openHand) }
 }

@@ -4,6 +4,14 @@
 
 <img src="Resources/AppIcon.png" width="128" height="128" alt="PinTerm icon">
 
+## Preview
+
+<img src="Resources/media/screenshot.png" width="100%" alt="PinTerm screenshot">
+
+<video src="https://github.com/taotao7/PinTerm/releases/download/v0.3.0/pinterm-demo.mp4" width="100%" autoplay muted loop controls playsinline></video>
+
+*[Download the demo video](https://github.com/taotao7/PinTerm/releases/download/v0.3.0/pinterm-demo.mp4)*
+
 A native macOS menu bar app for compact desktop terminals. Each module is an
 independent `NSWindow` embedding a Metal surface from `GhosttyTerminal` / libghostty,
 with a real PTY using the `.exec` backend. Not WidgetKit, SwiftTerm, a WebView,

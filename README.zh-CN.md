@@ -26,7 +26,7 @@ open -a PinTerm
 也可从 [GitHub Releases](https://github.com/taotao7/PinTerm/releases) 下载 ZIP，
 将 `PinTerm.app` 放入 Applications。应用只显示在菜单栏，不显示 Dock 图标。
 
-**v0.3.0 为 ad-hoc 签名，尚未经过 Apple 公证。** 若系统阻止首次打开，
+**v0.4.0 为 ad-hoc 签名，尚未经过 Apple 公证。** 若系统阻止首次打开，
 确认下载来源后按 macOS「系统设置 → 隐私与安全性 → 仍要打开」流程操作。
 安装脚本不会关闭 Gatekeeper，也不会自动移除隔离标记。
 
@@ -74,6 +74,7 @@ open dist/PinTerm.app
 - 每个面板的位置和大小都会自动单独保存，启动时恢复上次模块即可还原布局；
   移动和缩放不会重启 PTY。不再提供手动输入宽高的设置。
   退出时再次读取实际窗口布局保存；显示器变化导致重新居中时仍保留尺寸。
+- 选中组件后可从菜单以 4 点步进调整圆角半径（0–48 点）；0 为方角，调整立即生效并单独保存。
 - 菜单栏 **关闭当前模块** / Cmd+W 关闭窗口（会确认）。
 - Cmd+C / Cmd+V 复制粘贴，Cmd+` 循环窗口；Ctrl+C 发给终端。
 - 窗口加入所有 Spaces，可辅助显示在全屏空间；置顶默认开启，不在 Dock 显示。
@@ -95,7 +96,8 @@ open dist/PinTerm.app
   读取；每个目录内按 `config` → `config.ghostty` 顺序读取。
 - 处理 `config-file` 相对引用、可选引用和循环错误；主题优先找 XDG 的 `themes`
   目录，再找 `/Applications/Ghostty.app` 或 `~/Applications/Ghostty.app` 的主题资源。
-  也支持绝对主题路径和 light/dark 双主题。不会修改原 Ghostty 配置。
+  也支持绝对主题路径和 light/dark 双主题；macOS 外观变化时，已打开的终端会自动切换。
+  不会修改原 Ghostty 配置。
 - 全局独立配置路径非空时，**只读取该配置**；模块自身的 `configFile` 优先于全局。
 - 可勾选 **不载入 Ghostty 配置中的 tmux 启动命令**：将含 `tmux` 的
   `command` / `initial-command` 重置为引擎默认值，保留外观配置，也处理被引用的配置文件。
@@ -136,13 +138,14 @@ open dist/PinTerm.app
     "command": "npm run dev",
     "fontSize": 14,
     "opacity": 0.94,
+    "cornerRadius": 20,
     "alwaysOnTop": false,
     "frame": "{{100, 200}, {640, 360}}"
   }
 ]
 ```
 
-`command`、`configFile`、`fontSize`、`opacity`、`frame` 可省略；省略字号和透明度表示继承。
+`command`、`configFile`、`fontSize`、`opacity`、`cornerRadius`、`frame` 可省略；省略字号和透明度表示继承。
 损坏的 JSON 不会被覆盖；App 会提示，并停止本次自动保存。
 显示器变化导致窗口顶部不可见时，窗口会重新居中。
 

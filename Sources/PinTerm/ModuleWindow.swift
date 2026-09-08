@@ -6,12 +6,14 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
     TerminalSurfaceTitleDelegate, TerminalSurfaceCloseDelegate,
     TerminalSurfaceClipboardConfirmationDelegate {
     var module: Module
-    let terminal = TerminalView(frame: NSRect(x: 0, y: 0, width: 640, height: 360))
+    let terminal = AppearanceTerminalView(frame: NSRect(x: 0, y: 0, width: 640, height: 360))
     private let runtime: TerminalController
+    private let baseConfiguration: String
     var onChange: (() -> Void)?
     var onClose: (() -> Void)?
     var onActivate: (() -> Void)?
     private var processExited = false
+    private var usesDarkAppearance: Bool
 
     var configuredFontSize: Float {
         for line in runtime.renderedConfig.components(separatedBy: .newlines).reversed() {
@@ -26,7 +28,10 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
 
     init(module: Module, configuration: String) throws {
         self.module = module
-        runtime = TerminalController(configSource: .generated(configuration), theme: .init(),
+        baseConfiguration = configuration
+        usesDarkAppearance = Self.isDark(NSApp.effectiveAppearance)
+        runtime = TerminalController(configSource: .generated(try GhosttyConfiguration.selectingTheme(
+            in: configuration, dark: usesDarkAppearance)), theme: .init(),
             terminalConfiguration: TerminalConfiguration {
                 if let command = module.launchCommand {
                     $0.withCustom("initial-command", command)
@@ -58,6 +63,7 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
         window.level = module.alwaysOnTop ? .statusBar : .normal
         let container = WindowContentView()
         window.contentView = container
+        applyCornerRadius()
         terminal.configuration = TerminalSurfaceOptions(
             backend: .exec, workingDirectory: module.workingDirectory,
             command: module.launchCommand, waitAfterCommand: false
@@ -92,10 +98,26 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
             } else { window.center() }
         } else { window.center() }
         window.delegate = self
+        terminal.onAppearanceChange = { [weak self] appearance in
+            self?.applySystemAppearance(appearance)
+        }
         snapshotModule()
     }
 
     required init?(coder: NSCoder) { fatalError("Use init(module:)") }
+
+    private static func isDark(_ appearance: NSAppearance) -> Bool {
+        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+    }
+
+    private func applySystemAppearance(_ appearance: NSAppearance) {
+        let dark = Self.isDark(appearance)
+        if dark != usesDarkAppearance,
+           let configuration = try? GhosttyConfiguration.selectingTheme(in: baseConfiguration, dark: dark),
+           runtime.updateConfigSource(.generated(configuration)) {
+            usesDarkAppearance = dark
+        }
+    }
 
     func updateLocalizedText() {
         window?.contentView?.subviews.first { $0 is WindowTopEdge }?.toolTip = L10n.text(
@@ -112,6 +134,7 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
 
     func applyAppearance() {
         window?.level = module.alwaysOnTop ? .statusBar : .normal
+        applyCornerRadius()
         runtime.setTerminalConfiguration(TerminalConfiguration {
             if let command = module.launchCommand {
                 $0.withCustom("initial-command", command)
@@ -125,6 +148,12 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
             terminal.performBindingAction("set_font_size:\(fontSize)")
         } else { terminal.performBindingAction("reset_font_size") }
         onChange?()
+    }
+
+    private func applyCornerRadius() {
+        window?.contentView?.wantsLayer = true
+        window?.contentView?.layer?.cornerRadius = module.cornerRadius ?? 0
+        window?.contentView?.layer?.masksToBounds = true
     }
 
     func windowDidMove(_ notification: Notification) { saveFrame() }
@@ -283,4 +312,13 @@ private final class WindowContentView: NSView {
 private final class WindowTopEdge: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func resetCursorRects() { addCursorRect(bounds.insetBy(dx: 8, dy: 0), cursor: .resizeUpDown) }
+}
+
+final class AppearanceTerminalView: TerminalView {
+    var onAppearanceChange: ((NSAppearance) -> Void)?
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        onAppearanceChange?(effectiveAppearance)
+    }
 }

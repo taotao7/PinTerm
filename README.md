@@ -27,7 +27,7 @@ open -a PinTerm
 Alternatively, download the ZIP from [GitHub Releases](https://github.com/taotao7/PinTerm/releases)
 and move `PinTerm.app` to Applications. The app appears in the menu bar, not the Dock.
 
-**v0.3.0 is ad-hoc signed and has not been notarized by Apple.** If macOS blocks
+**v0.4.0 is ad-hoc signed and has not been notarized by Apple.** If macOS blocks
 the first launch, verify the download source, then use System Settings → Privacy
 & Security → Open Anyway. Installation does not disable Gatekeeper or automatically
 remove quarantine attributes.
@@ -79,7 +79,8 @@ as a reference for either interface language.
   the menu opens so focus changes cannot pin another widget. System security UI and
   higher-level system overlays are not covered by this guarantee.
 - Select a terminal, then use the menu bar to toggle always-on-top, font size (8–48),
-  or background opacity (94% → 100% → 75%). These changes do not restart the session.
+  background opacity (94% → 100% → 75%), or corner radius (0–48 points in 4-point steps).
+  These changes do not restart the session.
 - No native macOS title bar or traffic-light buttons. **By default, hold ⌘ Command + ⇧ Shift,
   then left-click and drag anywhere inside the terminal to move the window.**
   Drag any of the four edges or corners to resize without a modifier key;
@@ -115,7 +116,8 @@ independent config file, window restoration, and launch at login.
 - Resolves relative and optional `config-file` references and reports reference cycles.
   Themes are looked up in the XDG `themes` directory first, then in the theme resources
   of `/Applications/Ghostty.app` or `~/Applications/Ghostty.app`. Absolute theme paths
-  and light/dark theme pairs are supported. Your original Ghostty config is not modified.
+  and light/dark theme pairs are supported; open terminals switch variants automatically
+  when the macOS appearance changes. Your original Ghostty config is not modified.
 - When a global independent config path is set, **only that config is loaded**.
   A module's own `configFile` takes precedence over the global path.
 - Enable **不载入 Ghostty 配置中的 tmux 启动命令** (Skip tmux startup commands in Ghostty config)
@@ -166,13 +168,14 @@ side effects you do not want repeated automatically. Quit the app before editing
     "command": "npm run dev",
     "fontSize": 14,
     "opacity": 0.94,
+    "cornerRadius": 20,
     "alwaysOnTop": false,
     "frame": "{{100, 200}, {640, 360}}"
   }
 ]
 ```
 
-`command`, `configFile`, `fontSize`, `opacity`, and `frame` are optional; omitting font
+`command`, `configFile`, `fontSize`, `opacity`, `cornerRadius`, and `frame` are optional; omitting font
 size and opacity means inheritance. Corrupt JSON is not overwritten: the app reports
 the problem and stops automatic saving for that run. If a display change leaves
 the top of the window off-screen, the window is centered again.

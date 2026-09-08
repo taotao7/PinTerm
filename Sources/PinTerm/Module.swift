@@ -8,6 +8,7 @@ struct Module: Codable, Equatable, Identifiable {
     var configFile: String?
     var fontSize: Float?
     var opacity: Double?
+    var cornerRadius: Double?
     var alwaysOnTop = true
     var frame: String?
     /// Nil in older files means the widget was open.
@@ -24,6 +25,7 @@ struct Module: Codable, Equatable, Identifiable {
     func validate() throws {
         guard fontSize.map({ (8...48).contains($0) }) ?? true,
               opacity.map({ (0.25...1).contains($0) }) ?? true,
+              cornerRadius.map({ (0...48).contains($0) }) ?? true,
               workingDirectory.hasPrefix("/") else {
             throw CocoaError(.fileReadCorruptFile)
         }

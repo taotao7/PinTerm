@@ -128,6 +128,27 @@ struct WindowSmokeTests {
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         try capture(window, name: "borderless-inherited")
 
+        let originalAppearance = NSApp.appearance
+        defer { NSApp.appearance = originalAppearance }
+        NSApp.appearance = NSAppearance(named: .aqua)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        #expect(controller.terminal.controller?.effectiveColorScheme == .light)
+        #expect(controller.terminal.controller?.renderedConfig.contains("background = #f5f0e8") == true)
+        #expect(controller.terminal.ttyName == tty)
+        try capture(window, name: "system-theme-light")
+        NSApp.appearance = NSAppearance(named: .darkAqua)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        #expect(controller.terminal.controller?.effectiveColorScheme == .dark)
+        #expect(controller.terminal.controller?.renderedConfig.contains("background = #1a1d21") == true)
+        #expect(controller.terminal.ttyName == tty)
+        try capture(window, name: "system-theme-dark")
+        controller.module.cornerRadius = 32
+        controller.applyAppearance()
+        #expect(window.contentView?.layer?.cornerRadius == 32)
+        #expect(window.contentView?.layer?.masksToBounds == true)
+        #expect(controller.terminal.ttyName == tty)
+        try capture(window, name: "rounded-widget")
+
         var independentModule = module
         independentModule.id = UUID()
         let independent = try ModuleWindow(module: independentModule,

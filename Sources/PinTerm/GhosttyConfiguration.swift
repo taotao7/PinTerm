@@ -71,6 +71,22 @@ struct GhosttyConfiguration {
         return output.joined(separator: "\n")
     }
 
+    static func selectingTheme(in configuration: String, dark: Bool) throws -> String {
+        let prefix = dark ? "dark:" : "light:"
+        return try configuration.components(separatedBy: .newlines).map { line in
+            let parts = line.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+            guard parts.count == 2,
+                  parts[0].trimmingCharacters(in: .whitespaces) == "theme",
+                  let variant = parts[1].split(separator: ",").map({ $0.trimmingCharacters(in: .whitespaces) })
+                    .first(where: { $0.hasPrefix(prefix) }) else { return line }
+            let selected = String(variant.dropFirst(prefix.count))
+            if FileManager.default.fileExists(atPath: selected) {
+                return try String(contentsOfFile: selected, encoding: .utf8)
+            }
+            return "theme = " + selected
+        }.joined(separator: "\n")
+    }
+
     private func resolve(_ path: String, relativeTo directory: URL) -> URL {
         let expanded = (path as NSString).expandingTildeInPath
         return (expanded.hasPrefix("/") ? URL(fileURLWithPath: expanded) : directory.appendingPathComponent(expanded)).standardizedFileURL

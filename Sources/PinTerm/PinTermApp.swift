@@ -93,6 +93,8 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
         add(L10n.text("当前窗口：字号 +", "Current Window: Increase Font Size"), #selector(largerFont), to: menu)
         add(L10n.text("当前窗口：字号 −", "Current Window: Decrease Font Size"), #selector(smallerFont), to: menu)
         add(L10n.text("当前窗口：切换透明度", "Current Window: Cycle Opacity"), #selector(cycleOpacity), to: menu)
+        add(L10n.text("当前窗口：圆角 +", "Current Window: Increase Corner Radius"), #selector(rounderCorners), to: menu)
+        add(L10n.text("当前窗口：圆角 −", "Current Window: Decrease Corner Radius"), #selector(squarerCorners), to: menu)
         add(L10n.text("当前窗口：恢复配置字号与透明度", "Current Window: Reset Font and Opacity"), #selector(resetAppearance), to: menu)
         add(L10n.text("关闭当前模块", "Close Current Widget"), #selector(closeCurrent), to: menu, key: "w")
         menu.addItem(.separator())
@@ -166,7 +168,8 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
             return target != nil
         }
         if [#selector(renameCurrent), #selector(largerFont), #selector(smallerFont),
-            #selector(cycleOpacity), #selector(resetAppearance), #selector(closeCurrent), #selector(nextWindow), #selector(showAll)].contains(item.action) {
+            #selector(cycleOpacity), #selector(rounderCorners), #selector(squarerCorners),
+            #selector(resetAppearance), #selector(closeCurrent), #selector(nextWindow), #selector(showAll)].contains(item.action) {
             return current != nil
         }
         return true
@@ -348,6 +351,14 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
         guard let current else { return }
         let opacity = current.module.opacity ?? 0.94
         current.module.opacity = opacity > 0.95 ? 0.75 : (opacity > 0.8 ? 1 : 0.94)
+        current.applyAppearance()
+    }
+    @objc private func rounderCorners() { changeCornerRadius(4) }
+    @objc private func squarerCorners() { changeCornerRadius(-4) }
+
+    private func changeCornerRadius(_ delta: Double) {
+        guard let current else { return }
+        current.module.cornerRadius = min(48, max(0, (current.module.cornerRadius ?? 0) + delta))
         current.applyAppearance()
     }
     @objc private func resetAppearance() {

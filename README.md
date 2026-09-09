@@ -27,7 +27,7 @@ open -a PinTerm
 Alternatively, download the ZIP from [GitHub Releases](https://github.com/taotao7/PinTerm/releases)
 and move `PinTerm.app` to Applications. The app appears in the menu bar, not the Dock.
 
-**v0.4.1 is ad-hoc signed and has not been notarized by Apple.** If macOS blocks
+**v0.4.2 is ad-hoc signed and has not been notarized by Apple.** If macOS blocks
 the first launch, verify the download source, then use System Settings → Privacy
 & Security → Open Anyway. Installation does not disable Gatekeeper or automatically
 remove quarantine attributes.
@@ -70,6 +70,9 @@ as a reference for either interface language.
 - **Select Widget** lists existing windows by name. Selecting one does not create a new
   widget or reset its layout. **Selected Widget: Rename…** changes its name without changing
   its command or process. Legacy preset command-based names become readable names.
+  **Selected Widget: Edit Launch Settings…** changes the working directory, command, and
+  independent Ghostty configuration. Saving and confirming ends the current tasks and
+  restarts that widget while preserving its name, layout, font size, opacity, and pin state.
   Selection is remembered while switching to other apps, so menu actions keep their target.
 - All new widgets are pinned by default and can stay on top simultaneously. **Pin All Widgets**
   also enables pinning for all existing widgets, including closed widgets when reopened.

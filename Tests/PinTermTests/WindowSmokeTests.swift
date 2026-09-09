@@ -399,6 +399,60 @@ struct WindowSmokeTests {
         let updated = try #require(NSApp.mainMenu?.items.first?.submenu)
         #expect(updated.items.first { $0.representedObject as? UUID == first.id }?.title == "My Calendar")
 
+        let editedDirectory = directory.appendingPathComponent("edited-working-directory")
+        try FileManager.default.createDirectory(at: editedDirectory, withIntermediateDirectories: true)
+        let editedConfig = directory.appendingPathComponent("edited-config")
+        try "background-opacity = 0.8".write(to: editedConfig, atomically: true, encoding: .utf8)
+        calendar.module.fontSize = 18
+        calendar.module.opacity = 0.75
+        calendar.applyAppearance()
+        var editError: (any Error)?
+        let editTimer = Timer(timeInterval: 0.3, repeats: false) { _ in
+            MainActor.assumeIsolated {
+                do {
+                    let modal = try #require(NSApp.modalWindow)
+                    @MainActor func fields(_ view: NSView) -> [NSTextField] {
+                        (view as? NSTextField).map { [$0] } ?? view.subviews.flatMap(fields)
+                    }
+                    let content = try #require(modal.contentView)
+                    let editable = fields(content).filter(\.isEditable)
+                    #expect(editable.count == 3)
+                    editable[0].stringValue = editedDirectory.path
+                    editable[1].stringValue = "printf 'Edited widget\\n'; exec /bin/cat"
+                    editable[2].stringValue = editedConfig.path
+                    try capture(modal, name: "edit-widget")
+                    let confirmationTimer = Timer(timeInterval: 0.3, repeats: false) { _ in
+                        MainActor.assumeIsolated {
+                            guard NSApp.modalWindow != nil else {
+                                Issue.record("Restart confirmation did not appear")
+                                NSApp.abortModal()
+                                return
+                            }
+                            NSApp.stopModal(withCode: .alertFirstButtonReturn)
+                        }
+                    }
+                    RunLoop.main.add(confirmationTimer, forMode: .modalPanel)
+                    NSApp.stopModal(withCode: .alertFirstButtonReturn)
+                } catch { editError = error; NSApp.abortModal() }
+            }
+        }
+        RunLoop.main.add(editTimer, forMode: .modalPanel)
+        #expect(NSApp.sendAction(NSSelectorFromString("editCurrent"), to: delegate, from: nil))
+        if let editError { throw editError }
+        let edited = try #require(delegate.windows.first { $0.module.id == first.id })
+        #expect(edited !== calendar)
+        #expect(edited.module.title == "My Calendar")
+        #expect(edited.module.workingDirectory == editedDirectory.path)
+        #expect(edited.module.command == "printf 'Edited widget\\n'; exec /bin/cat")
+        #expect(edited.module.configFile == editedConfig.path)
+        #expect(edited.module.fontSize == 18)
+        #expect(edited.module.opacity == 0.75)
+        #expect(edited.module.alwaysOnTop)
+        #expect(edited.window?.frame == expected)
+        #expect(delegate.windows.count == 2)
+        #expect(try store.load().count == 2)
+        #expect(try store.load().first { $0.id == first.id }?.workingDirectory == editedDirectory.path)
+
         // Run the real quit-save path, then restore through the real application path.
         let quitTimer = Timer(timeInterval: 0.3, repeats: false) { _ in
             MainActor.assumeIsolated { NSApp.stopModal(withCode: .alertFirstButtonReturn) }
@@ -412,6 +466,11 @@ struct WindowSmokeTests {
         let restoredCalendar = try #require(restored.windows.first)
         #expect(restoredCalendar.window?.frame == expected)
         #expect(restoredCalendar.module.title == "My Calendar")
+        #expect(restoredCalendar.module.workingDirectory == editedDirectory.path)
+        #expect(restoredCalendar.module.command == "printf 'Edited widget\\n'; exec /bin/cat")
+        #expect(restoredCalendar.module.configFile == editedConfig.path)
+        #expect(restoredCalendar.module.fontSize == 18)
+        #expect(restoredCalendar.module.opacity == 0.75)
         #expect(restoredCalendar.module.alwaysOnTop)
         #expect(restoredCalendar.window?.level == .statusBar)
         #expect(restored.windows.count == 2)

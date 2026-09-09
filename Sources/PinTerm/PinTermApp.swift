@@ -90,6 +90,7 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
         add(L10n.text("全部组件置顶", "Pin All Widgets"), #selector(pinAll), to: menu)
         add(L10n.text("当前组件：保持置顶", "Selected Widget: Always on Top"), #selector(togglePin(_:)), to: menu)
         add(L10n.text("当前组件：重命名…", "Selected Widget: Rename…"), #selector(renameCurrent), to: menu)
+        add(L10n.text("当前组件：编辑启动设置…", "Selected Widget: Edit Launch Settings…"), #selector(editCurrent), to: menu)
         add(L10n.text("当前窗口：字号 +", "Current Window: Increase Font Size"), #selector(largerFont), to: menu)
         add(L10n.text("当前窗口：字号 −", "Current Window: Decrease Font Size"), #selector(smallerFont), to: menu)
         add(L10n.text("当前窗口：切换透明度", "Current Window: Cycle Opacity"), #selector(cycleOpacity), to: menu)
@@ -165,7 +166,7 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
             item.title = L10n.text("保持置顶", "Always on Top") + (target.map { ": " + $0.module.title } ?? "")
             return target != nil
         }
-        if [#selector(renameCurrent), #selector(largerFont), #selector(smallerFont),
+        if [#selector(renameCurrent), #selector(editCurrent), #selector(largerFont), #selector(smallerFont),
             #selector(cycleOpacity), #selector(resetAppearance), #selector(closeCurrent), #selector(nextWindow), #selector(showAll)].contains(item.action) {
             return current != nil
         }
@@ -186,13 +187,27 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
         if module.title == module.command, let preset = presetWidgets.first(where: { $0.command == module.command }) {
             module.title = preset.name
         }
+        let controller = try makeController(for: module)
+        closedModules.removeAll { $0.id == module.id }
+        windows.append(controller)
+        connect(controller)
+        selectedModuleID = module.id
+        controller.present()
+        rebuildMenus()
+        save()
+        return controller
+    }
+
+    private func makeController(for module: Module) throws -> ModuleWindow {
         let path = module.configFile ?? (settings.independentConfig.isEmpty ? nil : settings.independentConfig)
         let configuration = try GhosttyConfiguration().load(independentFile: path, skipTmux: settings.skipTmux)
         let controller = try ModuleWindow(module: module, configuration: configuration,
             cornerRadius: settings.cornerRadius)
-        closedModules.removeAll { $0.id == module.id }
         (controller.window as? TerminalWindow)?.dragModifiers = NSEvent.ModifierFlags(rawValue: settings.dragModifiers)
-        windows.append(controller)
+        return controller
+    }
+
+    private func connect(_ controller: ModuleWindow) {
         controller.onChange = { [weak self] in self?.save() }
         controller.onActivate = { [weak self, weak controller] in self?.selectedModuleID = controller?.module.id }
         controller.onClose = { [weak self, weak controller] in
@@ -206,11 +221,6 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
             self?.save()
             self?.rebuildMenus()
         }
-        selectedModuleID = module.id
-        controller.present()
-        rebuildMenus()
-        save()
-        return controller
     }
 
     var current: ModuleWindow? {
@@ -336,6 +346,85 @@ final class PinTermApp: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenuI
         current.window?.title = title
         save()
         rebuildMenus()
+    }
+
+    @objc private func editCurrent() {
+        guard let current else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.window.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        alert.messageText = L10n.text("编辑组件启动设置", "Edit Widget Launch Settings")
+        alert.informativeText = L10n.text("保存后将重新启动此组件。命令留空会继承 Ghostty 的启动命令；配置文件留空会跟随全局设置。", "Saving restarts this widget. Leave the command blank to inherit Ghostty’s startup command, or the config file blank to use global settings.")
+        let directory = NSTextField(string: current.module.workingDirectory)
+        let command = NSTextField(string: current.module.command ?? "")
+        let config = NSTextField(string: current.module.configFile ?? "")
+        command.placeholderString = L10n.text("默认 shell / ssh / dev server", "Default shell / ssh / dev server")
+        config.placeholderString = L10n.text("跟随全局设置", "Use global settings")
+        let stack = NSStackView(views: [
+            NSTextField(labelWithString: L10n.text("工作目录（绝对路径）", "Working Directory (absolute path)")), directory,
+            NSTextField(labelWithString: L10n.text("命令", "Command")), command,
+            NSTextField(labelWithString: L10n.text("独立配置文件", "Independent Config File")), config,
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 6
+        stack.frame = NSRect(x: 0, y: 0, width: 400, height: 160)
+        for field in [directory, command, config] { field.widthAnchor.constraint(equalToConstant: 400).isActive = true }
+        alert.accessoryView = stack
+        alert.addButton(withTitle: L10n.text("保存并重启", "Save and Restart"))
+        alert.addButton(withTitle: L10n.text("取消", "Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        var module = current.snapshotModule()
+        let path = (directory.stringValue as NSString).expandingTildeInPath
+        var isDirectory: ObjCBool = false
+        guard path.hasPrefix("/"),
+              FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            report(CocoaError(.fileNoSuchFile), message: L10n.text("工作目录不存在。", "The working directory does not exist."))
+            return
+        }
+        module.workingDirectory = path
+        module.command = command.stringValue.isEmpty ? nil : command.stringValue
+        module.configFile = config.stringValue.isEmpty ? nil : (config.stringValue as NSString).expandingTildeInPath
+
+        do {
+            let configPath = module.configFile ?? (settings.independentConfig.isEmpty ? nil : settings.independentConfig)
+            let configuration = try GhosttyConfiguration().load(independentFile: configPath, skipTmux: settings.skipTmux)
+            let validator = TerminalController(configSource: .generated(configuration), theme: .init())
+            if let issue = validator.lastConfigurationIssue { throw ConfigurationError(issue) }
+        } catch {
+            report(error, message: L10n.text("无法应用启动设置，请检查 Ghostty 配置。", "Unable to apply launch settings. Check the Ghostty configuration."))
+            return
+        }
+
+        let confirmation = NSAlert()
+        confirmation.window.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        confirmation.messageText = L10n.text("重新启动这个组件？", "Restart this widget?")
+        confirmation.informativeText = L10n.text("当前终端中的 shell 和任务将结束，窗口布局和外观会保留。", "The shell and tasks in the current terminal will end. Window layout and appearance are preserved.")
+        confirmation.addButton(withTitle: L10n.text("重新启动", "Restart"))
+        confirmation.addButton(withTitle: L10n.text("取消", "Cancel"))
+        guard confirmation.runModal() == .alertFirstButtonReturn else { return }
+
+        do {
+            let replacement = try makeController(for: module)
+            guard let index = windows.firstIndex(where: { $0 === current }) else {
+                replacement.window?.close()
+                return
+            }
+            current.onClose = nil
+            current.onChange = nil
+            current.onActivate = nil
+            current.terminal.controller = nil
+            current.window?.close()
+            windows[index] = replacement
+            connect(replacement)
+            selectedModuleID = module.id
+            replacement.present()
+            save()
+            rebuildMenus()
+        } catch {
+            report(error, message: L10n.text("无法重新启动组件；原终端仍在运行。", "Unable to restart the widget. The original terminal is still running."))
+        }
     }
     @objc private func largerFont() { changeFont(1) }
     @objc private func smallerFont() { changeFont(-1) }

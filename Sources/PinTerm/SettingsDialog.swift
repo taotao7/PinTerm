@@ -12,9 +12,14 @@ final class SettingsDialog {
     let skipTmux: NSButton
     let languagePicker: NSPopUpButton
     let modifierButtons: [(NSEvent.ModifierFlags, NSButton)]
+    let cornerRadiusSlider: NSSlider
 
     var selectedDragModifiers: UInt {
         modifierButtons.reduce(0) { $0 | ($1.1.state == .on ? $1.0.rawValue : 0) }
+    }
+
+    var selectedCornerRadius: Double {
+        cornerRadiusSlider.doubleValue
     }
 
     init(_ settings: AppSettings) {
@@ -58,11 +63,21 @@ final class SettingsDialog {
         modifiers.spacing = 12
         let dragNote = NSTextField(wrappingLabelWithString: L10n.text("至少选择一个键；按住所选组合 + 左键拖动。保存后立即生效，不触发原生贴边分屏；单键组合可能覆盖终端手势。", "Select at least one key, then hold the combination and drag with the left mouse button. Changes apply immediately after saving, without triggering native window tiling. Single-key combinations may override terminal gestures."))
         dragNote.textColor = .secondaryLabelColor
+        cornerRadiusSlider = NSSlider(value: settings.cornerRadius, minValue: 0, maxValue: 48, target: nil, action: nil)
+        cornerRadiusSlider.numberOfTickMarks = 13
+        let cornerRadiusControl = NSStackView(views: [
+            NSTextField(labelWithString: L10n.text("所有组件圆角", "All widget radius")),
+            NSTextField(labelWithString: L10n.text("方角 0", "Square 0")),
+            cornerRadiusSlider,
+            NSTextField(labelWithString: L10n.text("圆角 48", "Rounded 48")),
+        ])
+        cornerRadiusControl.spacing = 8
         let stack = NSStackView(views: [
             NSTextField(labelWithString: L10n.text("界面语言", "Interface language")), languagePicker,
             NSTextField(labelWithString: L10n.text("默认运行命令", "Default command")), command,
             NSTextField(labelWithString: L10n.text("默认工作目录", "Default working directory")), directory,
             NSTextField(labelWithString: L10n.text("独立 Ghostty 配置（可选）", "Separate Ghostty configuration (optional)")), config,
+            cornerRadiusControl,
             skipTmux, tmuxNote, restore, launch, statusText,
             NSTextField(labelWithString: L10n.text("拖动窗口快捷键", "Window drag shortcut")), modifiers, dragNote,
         ])
@@ -74,6 +89,7 @@ final class SettingsDialog {
         for field in [command, directory, config, statusText, tmuxNote, dragNote] {
             field.widthAnchor.constraint(equalToConstant: width).isActive = true
         }
+        cornerRadiusSlider.widthAnchor.constraint(equalToConstant: 230).isActive = true
         for note in [statusText, tmuxNote, dragNote] {
             note.preferredMaxLayoutWidth = width
             note.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -93,6 +109,7 @@ final class SettingsDialog {
         result.restoreWindows = restore.state == .on
         result.skipTmux = skipTmux.state == .on
         result.dragModifiers = selectedDragModifiers
+        result.cornerRadius = selectedCornerRadius
         let selectedIndex = languagePicker.indexOfSelectedItem
         let language = AppLanguage.allCases.indices.contains(selectedIndex)
             ? AppLanguage.allCases[selectedIndex] : .system

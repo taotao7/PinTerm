@@ -45,7 +45,6 @@ struct ModuleStoreTests {
         module.alwaysOnTop = true
         module.fontSize = 18
         module.opacity = 0.75
-        module.cornerRadius = 20
         try store.save([module, Module()])
         #expect(try store.load().first == module)
         #expect(try store.load().count == 2)
@@ -61,9 +60,6 @@ struct ModuleStoreTests {
         module.fontSize = 0
         #expect(throws: (any Error).self) { try module.validate() }
         module.fontSize = 14
-        module.cornerRadius = 49
-        #expect(throws: (any Error).self) { try module.validate() }
-        module.cornerRadius = 0
         module.workingDirectory = "relative/path"
         #expect(throws: (any Error).self) { try module.validate() }
     }

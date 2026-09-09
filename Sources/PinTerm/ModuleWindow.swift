@@ -26,7 +26,7 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
         return 13 // Native Ghostty macOS default, not the wrapper's 14pt default.
     }
 
-    init(module: Module, configuration: String) throws {
+    init(module: Module, configuration: String, cornerRadius: Double = 0) throws {
         self.module = module
         baseConfiguration = configuration
         usesDarkAppearance = Self.isDark(NSApp.effectiveAppearance)
@@ -63,7 +63,7 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
         window.level = module.alwaysOnTop ? .statusBar : .normal
         let container = WindowContentView()
         window.contentView = container
-        applyCornerRadius()
+        setCornerRadius(cornerRadius)
         terminal.configuration = TerminalSurfaceOptions(
             backend: .exec, workingDirectory: module.workingDirectory,
             command: module.launchCommand, waitAfterCommand: false
@@ -134,7 +134,6 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
 
     func applyAppearance() {
         window?.level = module.alwaysOnTop ? .statusBar : .normal
-        applyCornerRadius()
         runtime.setTerminalConfiguration(TerminalConfiguration {
             if let command = module.launchCommand {
                 $0.withCustom("initial-command", command)
@@ -150,10 +149,8 @@ final class ModuleWindow: NSWindowController, NSWindowDelegate,
         onChange?()
     }
 
-    private func applyCornerRadius() {
-        window?.contentView?.wantsLayer = true
-        window?.contentView?.layer?.cornerRadius = module.cornerRadius ?? 0
-        window?.contentView?.layer?.masksToBounds = true
+    func setCornerRadius(_ cornerRadius: Double) {
+        terminal.terminalCornerRadius = cornerRadius
     }
 
     func windowDidMove(_ notification: Notification) { saveFrame() }
@@ -316,9 +313,22 @@ private final class WindowTopEdge: NSView {
 
 final class AppearanceTerminalView: TerminalView {
     var onAppearanceChange: ((NSAppearance) -> Void)?
+    var terminalCornerRadius: CGFloat = 0 {
+        didSet { applyCornerRadius() }
+    }
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
         onAppearanceChange?(effectiveAppearance)
+    }
+
+    override func layout() {
+        super.layout()
+        applyCornerRadius()
+    }
+
+    private func applyCornerRadius() {
+        layer?.cornerRadius = terminalCornerRadius
+        layer?.masksToBounds = true
     }
 }

@@ -27,7 +27,7 @@ open -a PinTerm
 Alternatively, download the ZIP from [GitHub Releases](https://github.com/taotao7/PinTerm/releases)
 and move `PinTerm.app` to Applications. The app appears in the menu bar, not the Dock.
 
-**v0.4.0 is ad-hoc signed and has not been notarized by Apple.** If macOS blocks
+**v0.4.1 is ad-hoc signed and has not been notarized by Apple.** If macOS blocks
 the first launch, verify the download source, then use System Settings → Privacy
 & Security → Open Anyway. Installation does not disable Gatekeeper or automatically
 remove quarantine attributes.
@@ -79,7 +79,8 @@ as a reference for either interface language.
   the menu opens so focus changes cannot pin another widget. System security UI and
   higher-level system overlays are not covered by this guarantee.
 - Select a terminal, then use the menu bar to toggle always-on-top, font size (8–48),
-  background opacity (94% → 100% → 75%), or corner radius (0–48 points in 4-point steps).
+  or background opacity (94% → 100% → 75%). Use the Settings slider to adjust
+  every widget's corner radius continuously from 0 to 48 points.
   These changes do not restart the session.
 - No native macOS title bar or traffic-light buttons. **By default, hold ⌘ Command + ⇧ Shift,
   then left-click and drag anywhere inside the terminal to move the window.**
@@ -168,14 +169,13 @@ side effects you do not want repeated automatically. Quit the app before editing
     "command": "npm run dev",
     "fontSize": 14,
     "opacity": 0.94,
-    "cornerRadius": 20,
     "alwaysOnTop": false,
     "frame": "{{100, 200}, {640, 360}}"
   }
 ]
 ```
 
-`command`, `configFile`, `fontSize`, `opacity`, `cornerRadius`, and `frame` are optional; omitting font
+`command`, `configFile`, `fontSize`, `opacity`, and `frame` are optional; omitting font
 size and opacity means inheritance. Corrupt JSON is not overwritten: the app reports
 the problem and stops automatic saving for that run. If a display change leaves
 the top of the window off-screen, the window is centered again.

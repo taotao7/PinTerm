@@ -142,10 +142,11 @@ struct WindowSmokeTests {
         #expect(controller.terminal.controller?.renderedConfig.contains("background = #1a1d21") == true)
         #expect(controller.terminal.ttyName == tty)
         try capture(window, name: "system-theme-dark")
-        controller.module.cornerRadius = 32
-        controller.applyAppearance()
-        #expect(window.contentView?.layer?.cornerRadius == 32)
-        #expect(window.contentView?.layer?.masksToBounds == true)
+        NSApp.appearance = originalAppearance
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        controller.setCornerRadius(32)
+        #expect(controller.terminal.layer?.cornerRadius == 32)
+        #expect(controller.terminal.layer?.masksToBounds == true)
         #expect(controller.terminal.ttyName == tty)
         try capture(window, name: "rounded-widget")
 
@@ -158,7 +159,9 @@ struct WindowSmokeTests {
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         try capture(try #require(independent.window), name: "borderless-independent")
 
-        let settings = SettingsDialog(AppSettings())
+        var appSettings = AppSettings()
+        appSettings.cornerRadius = 32
+        let settings = SettingsDialog(appSettings)
         settings.alert.window.appearance = NSAppearance(named: .aqua)
         settings.alert.layout()
         #expect(settings.skipTmux.state == .on)
@@ -166,6 +169,9 @@ struct WindowSmokeTests {
         #expect(settings.skipTmux.state == .off)
         settings.skipTmux.performClick(nil)
         #expect(settings.selectedDragModifiers == AppSettings().dragModifiers)
+        #expect(settings.cornerRadiusSlider.doubleValue == 32)
+        settings.cornerRadiusSlider.doubleValue = 36
+        #expect(settings.selectedCornerRadius == 36)
         settings.modifierButtons.forEach { $0.1.state = .off }
         #expect(settings.selectedDragModifiers == 0)
         settings.modifierButtons[3].1.performClick(nil)

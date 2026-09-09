@@ -8,11 +8,12 @@ struct AppSettings: Codable, Equatable {
     var restoreWindows = true
     var skipTmux = true
     var dragModifiers = NSEvent.ModifierFlags([.command, .shift]).rawValue
+    var cornerRadius = 0.0
 
     init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case defaultCommand, defaultDirectory, independentConfig, restoreWindows, skipTmux, dragModifiers
+        case defaultCommand, defaultDirectory, independentConfig, restoreWindows, skipTmux, dragModifiers, cornerRadius
     }
 
     init(from decoder: Decoder) throws {
@@ -24,6 +25,7 @@ struct AppSettings: Codable, Equatable {
         skipTmux = try values.decodeIfPresent(Bool.self, forKey: .skipTmux) ?? true
         dragModifiers = try values.decodeIfPresent(UInt.self, forKey: .dragModifiers)
             ?? NSEvent.ModifierFlags([.command, .shift]).rawValue
+        cornerRadius = try values.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? 0
     }
 
     static var url: URL { ModuleStore.standard.url.deletingLastPathComponent().appendingPathComponent("settings.json") }

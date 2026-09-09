@@ -64,9 +64,10 @@ struct GhosttyConfigurationTests {
         #expect(settings.newModule().command == nil)
         #expect(settings.newModule().fontSize == nil)
         #expect(settings.newModule().opacity == nil)
-        #expect(settings.newModule().cornerRadius == nil)
+        #expect(settings.cornerRadius == 0)
         settings.defaultCommand = "btop"
         settings.defaultDirectory = "/tmp"
+        settings.cornerRadius = 32
         let decoded = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings))
         #expect(decoded == settings)
         #expect(decoded.newModule().command == "btop")
@@ -77,7 +78,6 @@ struct GhosttyConfigurationTests {
         let module = try JSONDecoder().decode(Module.self, from: old)
         #expect(module.fontSize == 18)
         #expect(module.configFile == nil)
-        #expect(module.cornerRadius == nil)
     }
 
     @Test func selectsThemeForSystemAppearance() throws {
